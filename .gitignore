@@ -1,0 +1,5 @@
+.venv/
+depth/
+frames/
+generated/
+*.mp4
