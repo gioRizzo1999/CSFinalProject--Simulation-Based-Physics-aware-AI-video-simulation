@@ -1,5 +1,6 @@
 
 ## Setup
+The project uses a conda environment.
 Run these commands in a terminal:
 conda env create -f environment.yml
 conda activate sim2vid
