@@ -1,7 +1,11 @@
-# CSFinalProject
-Computer science final project
 
-Introduction
+## Setup
+Run these commands in a terminal:
+conda env create -f environment.yml
+conda activate sim2vid
+
+
+## introduction and motivations
 
 The recent developments in artificial intelligence technology are allowing the generation of increasingly realistic, temporally coherent, high-quality videos from human textual prompts. This technology is revolutionary and is changing many industries and dimensions of life, from education to entertainment, art, science, and much more.
 Even though these models can create coherent and highly convincing videos, they still have some specific limitations. One of these limitations is the inability to produce correct and consistent motion that abides by the laws of physics. This is because many state-of-the-art video generators work by statistical approximation of learned visual patterns. This approach seems, in principle, incompatible with producing numerically exact physics, because motion is always approximated and there is no direct encoding of physical laws in the model. Furthermore, this makes it equally difficult, if not impossible, to handle or set physical parameters such as gravity, friction, mass, or other quantities. This fact makes AI video generators limited in fields that require exact physical realism, such as scientific simulations for experiments or education.
