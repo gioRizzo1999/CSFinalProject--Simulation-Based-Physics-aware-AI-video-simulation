@@ -12,7 +12,13 @@ p.setAdditionalSearchPath(pybullet_data.getDataPath())
 # create output folder
 os.makedirs("frames", exist_ok=True)
 
-#------------------------------------- scene specs
+#------------------------------------- scene specs:
+# what objects to load
+# dimension, position, rotation
+# camera position and rotation
+# number of frames
+
+
 # load inclined plane
 plane_id = p.loadURDF("plane.urdf")
 
@@ -41,10 +47,11 @@ proj = p.computeProjectionMatrixFOV(
     nearVal=0.1,
     farVal=10.0
 )
-#------------------------------------------
 
 # simulation loop
+
 num_frames = 100  
+#------------------------------------------
 for i in range(num_frames):
     p.stepSimulation()
 

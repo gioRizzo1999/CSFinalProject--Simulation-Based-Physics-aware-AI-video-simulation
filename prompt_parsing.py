@@ -17,20 +17,25 @@ from ollama import ChatResponse
 # -validate llm output
 # -pass output to simulation.py
 
-fineTuning = "turn the prompt into a json specification for a scene"
+#minimal: produce json spec
+#final idea: produce json specs and intent, then trigger pre-defined code for more complex scene
 
-dynamicPrompt = "a realistic ball rolling down an inclined plane, cinematic lighting, detailed textures"
+# fineTuning = "turn the prompt into a json specification for a scene. " \
+# "Extract relevant data in the prompt and put it in the following format:" \
+# ""
 
 response: ChatResponse = chat(model='gemma:2b', messages=[
   {
     'role': 'user',
-    'content': 'Why is the sky blue?',
+    'content': "begginning of scene: a realistic cube rolling down an inclined plane, cinematic lighting, detailed textures. end of scene. Determine which objects are mentioned in the scene and output them as a json list of strings like this:[dmdkfm, dfmdfkmdk, ecc], do not add anything else",
   },
 ])
 
-print(response['message']['content'])
+# print(response['message']['content'])
 # or access fields directly from the response object
 print(response.message.content)
+
+
 
 
 
