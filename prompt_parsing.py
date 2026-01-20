@@ -1,6 +1,7 @@
 #boilerplate code from Ollama Github + custom code
 from ollama import chat
 from ollama import ChatResponse
+import json
 
 #high level:
 #user inserts prompt that describes scene
@@ -27,18 +28,27 @@ from ollama import ChatResponse
 response: ChatResponse = chat(model='gemma:2b', messages=[
   {
     'role': 'user',
-    'content': "begginning of scene: a realistic cube rolling down an inclined plane, cinematic lighting, detailed textures. end of scene. Determine which objects are mentioned in the scene and output them as a json list of strings like this:[dmdkfm, dfmdfkmdk, ecc], do not add anything else",
+    'content': "begginning of scene: a realistic cube rolling down an inclined plane, cinematic lighting, detailed textures. end of scene. Determine which objects are mentioned in the scene and output them as a json list of strings in this format:[, , ], do not add anything else",
   },
 ])
 
 # print(response['message']['content'])
 # or access fields directly from the response object
-print(response.message.content)
+# print(response.message.content)
 
 
+#parse into json
+string = response.message.content
+parsed_json = json.loads(string)
+print(parsed_json)
 
+#select only content between curly brackets
+# input_string = string
+# isolated_string = input_string.split('{')[1].split('}')[0]
+# print(isolated_string)  
 
+# write to file
+with open("parsed_json.json", "w") as file:
+  json.dump(parsed_json, file, indent=4)
 
-
-
-
+#create tests to validate json parsing

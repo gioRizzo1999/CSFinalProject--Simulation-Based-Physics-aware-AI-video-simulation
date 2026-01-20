@@ -3,6 +3,7 @@ import pybullet_data
 import cv2
 import numpy as np
 import os
+import json
 
 
 p.connect(p.DIRECT)  # No GUI, faster for frame extraction
@@ -18,21 +19,44 @@ os.makedirs("frames", exist_ok=True)
 # camera position and rotation
 # number of frames
 
+# import json file with scene data
+with open("parsed_json.json", "r") as f:
+    scene = json.load(f)
 
-# load inclined plane
-plane_id = p.loadURDF("plane.urdf")
+# objects = scene.get("objects", []) 
 
-# tilt the plane by rotating it around x-axis
-p.resetBasePositionAndOrientation(
-    plane_id,
-    [0, 0, 0],
-    p.getQuaternionFromEuler([0.3, 0, 0])   #(17 degrees inclination)
-)
+# if plane in json list then load inclined plane
+if "plane" in scene:
+    plane_data = scene["plane"]
+    pos = plane_data["position"]
+    rot = plane_data["rotation"]
+    plane_pos = [pos["x"], pos["y"], pos["z"]]
+    plane_rot = [rot["x"], rot["y"], rot["z"]]
 
-# load sphere
-ball_start_pos = [0, 0, 0.5]
-ball_start_orn = p.getQuaternionFromEuler([0, 0, 0])
-ball = p.loadURDF("sphere2.urdf", ball_start_pos, ball_start_orn)
+    print("plane detected")
+    #load the plane
+    plane_id = p.loadURDF("plane.urdf")
+    # tilt the plane by rotating it around x-axis
+    p.resetBasePositionAndOrientation(
+        plane_id,
+        plane_pos,
+        p.getQuaternionFromEuler(plane_rot)   #(17 degrees inclination)
+    )
+else:
+    print("No plane")
+
+
+
+# if sphere in json list then load sphere
+if "sphere" in scene:
+    print("sphere detected")
+    #load and position sphere
+    ball_start_pos = [0, 0, 0.5]
+    ball_start_orn = p.getQuaternionFromEuler([0, 0, 0])
+    ball = p.loadURDF("sphere2.urdf", ball_start_pos, ball_start_orn)
+else:
+    print("No sphere")
+
 
 # camera setup
 width, height = 640, 480
