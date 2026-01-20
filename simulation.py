@@ -46,16 +46,32 @@ else:
     print("No plane")
 
 
-
 # if sphere in json list then load sphere
 if "sphere" in scene:
+    sphere_data = scene["sphere"]
+    pos = sphere_data["position"]
+    rot = sphere_data["rotation"]
+    sphere_pos = [pos["x"], pos["y"], pos["z"]]
+    sphere_rot = [rot["x"], rot["y"], rot["z"]]
     print("sphere detected")
     #load and position sphere
-    ball_start_pos = [0, 0, 0.5]
-    ball_start_orn = p.getQuaternionFromEuler([0, 0, 0])
-    ball = p.loadURDF("sphere2.urdf", ball_start_pos, ball_start_orn)
+    sphere = p.loadURDF("sphere2.urdf", sphere_pos, p.getQuaternionFromEuler(sphere_rot))
 else:
     print("No sphere")
+
+
+# if cube in json list then load sphere
+if "cube" in scene:
+    cube_data = scene["cube"]
+    pos = cube_data["position"]
+    rot = cube_data["rotation"]
+    cube_pos = [pos["x"], pos["y"], pos["z"]]
+    cube_rot = [rot["x"], rot["y"], rot["z"]]
+    print("cube detected")
+    #load and position sphere
+    cube = p.loadURDF("cube.urdf", cube_pos, p.getQuaternionFromEuler(cube_rot))
+else:
+    print("No cube")
 
 
 # camera setup
