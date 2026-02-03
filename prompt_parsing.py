@@ -2,6 +2,7 @@
 from ollama import chat
 from ollama import ChatResponse
 import json
+import sys
 
 #high level:
 #user inserts prompt that describes scene
@@ -25,10 +26,33 @@ import json
 # "Extract relevant data in the prompt and put it in the following format:" \
 # ""
 
-response: ChatResponse = chat(model='gemma:2b', messages=[
+user_prompt = sys.argv[1]
+# user_prompt = "a realistic sphere falling from above over an inclined plane 30 degrees, minimal scene, realistic layout and motion."
+
+
+tuning= """ Based on the description of the scene, produce a JSON file that matches the following schema, Use the same keys, Replace example values with values you deem appropriate to the scene: {
+  "objects": [
+    {
+      "name": "string, choose between plane, sphere, cube",
+      "how_many": int,
+      "position": { "x": radians, "y": radians, "z": radians },
+      "rotation": { "x": radians, "y": radians, "z": radians }
+    },
+    {
+      "name": "string, choose between plane, sphere, cube",
+      "how_many": int,
+      "position": { "x": radians, "y": radians, "z": radians },
+      "rotation": { "x": radians, "y": radians, "z": radians }
+    }
+  ]
+}
+"""
+full_prompt = f"""{user_prompt} {tuning}""" 
+
+response: ChatResponse = chat(model='qwen3-coder:480b-cloud', messages=[
   {
     'role': 'user',
-    'content': "begginning of scene: a realistic cube rolling down an inclined plane, cinematic lighting, detailed textures. end of scene. Determine which objects are mentioned in the scene and output them as a json list of strings in this format:[, , ], do not add anything else",
+    'content': full_prompt
   },
 ])
 
@@ -38,9 +62,20 @@ response: ChatResponse = chat(model='gemma:2b', messages=[
 
 
 #parse into json
-string = response.message.content
-parsed_json = json.loads(string)
-print(parsed_json)
+# string = response.message.content
+# parsed_json = json.loads(string)
+# print(parsed_json)
+
+resp = response.message.content.strip()
+start = resp.find("{")
+end = resp.rfind("}") + 1
+
+if start == -1 or end == 0:
+    raise ValueError(f"No JSON found: \n{resp}")
+
+only_json = resp[start:end]
+parsed_json = json.loads(only_json)
+
 
 #select only content between curly brackets
 # input_string = string
@@ -52,3 +87,5 @@ with open("parsed_json.json", "w") as file:
   json.dump(parsed_json, file, indent=4)
 
 #create tests to validate json parsing
+
+
