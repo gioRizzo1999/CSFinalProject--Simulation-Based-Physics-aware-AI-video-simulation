@@ -1,31 +1,31 @@
 {
     "objects": [
         {
-            "name": "plane",
-            "how_many": 1,
-            "position": {
-                "x": 0,
-                "y": 0,
-                "z": 0
-            },
-            "rotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0.5236
-            }
-        },
-        {
             "name": "sphere",
             "how_many": 1,
             "position": {
-                "x": 0,
-                "y": 2,
-                "z": 0
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
             },
             "rotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            }
+        },
+        {
+            "name": "plane",
+            "how_many": 1,
+            "position": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "rotation": {
+                "x": -0.2618,
+                "y": 0.0,
+                "z": 0.0
             }
         }
     ]
