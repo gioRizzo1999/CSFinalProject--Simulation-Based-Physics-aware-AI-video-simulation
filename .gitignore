@@ -4,3 +4,8 @@ frames/
 generated/
 *.mp4
 *.gif
+*.json
+*.npy
+*.png
+flow/
+*.npy
