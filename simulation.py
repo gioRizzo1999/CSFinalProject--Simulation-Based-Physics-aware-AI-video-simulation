@@ -25,62 +25,38 @@ with open("parsed_json.json", "r") as f:
 
 objects = scene.get("objects", [])
 
-# if plane in json list then load inclined plane
-count = 0
+OBJ_DICT = {
+    "plane": "plane.urdf",
+    "sphere": "sphere2.urdf",
+    "cube": "cube.urdf",
+}
+found = {"plane": False, "sphere": False, "cube": False}
+# loop over all objects and add to simulation if present
 for o in objects:
-    if o.get("name") == "plane":
-        count = 1
-        plane_data = o     
-        pos = plane_data["position"]
-        rot = plane_data["rotation"]
-        plane_pos = [pos["x"], pos["y"], pos["z"]]
-        plane_rot = [rot["x"], rot["y"], rot["z"]]
+    name = o.get("name")
+    if name not in OBJ_DICT:
+        continue
 
-        print("plane detected")
-        #load the plane
-        plane_id = p.loadURDF("plane.urdf")
-        # tilt the plane by rotating it around x-axis
-        p.resetBasePositionAndOrientation(
-            plane_id,
-            plane_pos,
-            p.getQuaternionFromEuler(plane_rot)   #(17 degrees inclination)
-        )
-if count == 0:
-    print("No plane")
+    found[name] = True
 
+    pos = o["position"]
+    rot = o["rotation"]
 
-# if sphere in json list then load sphere
-count = 0
-for o in objects:
-    if o.get("name") == "sphere":
-        count = 1
-        sphere_data = o 
-        pos = sphere_data["position"]
-        rot = sphere_data["rotation"]
-        sphere_pos = [pos["x"], pos["y"], pos["z"]]
-        sphere_rot = [rot["x"], rot["y"], rot["z"]]
-        print("sphere detected")
-        #load and position sphere
-        sphere = p.loadURDF("sphere2.urdf", sphere_pos, p.getQuaternionFromEuler(sphere_rot))
-if count == 0:
-    print("No sphere")
+    obj_pos = [pos["x"], pos["y"], pos["z"]]
+    obj_rot = [rot["x"], rot["y"], rot["z"]]
 
+    print(f"{name} detected")
 
-# if cube in json list then load sphere
-count = 0
-for o in objects:
-    if o.get("name") == "cube":
-        count = 1
-        cube_data = o 
-        pos = cube_data["position"]
-        rot = cube_data["rotation"]
-        cube_pos = [pos["x"], pos["y"], pos["z"]]
-        cube_rot = [rot["x"], rot["y"], rot["z"]]
-        print("cube detected")
-        #load and position sphere
-        cube = p.loadURDF("cube.urdf", cube_pos, p.getQuaternionFromEuler(cube_rot))
-if count == 0:
-    print("No cube")
+    obj_id = p.loadURDF(OBJ_DICT[name])
+    p.resetBasePositionAndOrientation(
+        obj_id,
+        obj_pos,
+        p.getQuaternionFromEuler(obj_rot)
+    )
+# print absent objects
+for k, v in found.items():
+    if not v:
+        print(f"No {k}")
 
 
 # camera setup

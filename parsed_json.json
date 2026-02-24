@@ -1,20 +1,6 @@
 {
     "objects": [
         {
-            "name": "sphere",
-            "how_many": 1,
-            "position": {
-                "x": 0.0,
-                "y": 0.0,
-                "z": 0.0
-            },
-            "rotation": {
-                "x": 0.0,
-                "y": 0.0,
-                "z": 0.0
-            }
-        },
-        {
             "name": "plane",
             "how_many": 1,
             "position": {
@@ -23,7 +9,21 @@
                 "z": 0.0
             },
             "rotation": {
-                "x": -0.2618,
+                "x": -0.52,
+                "y": 0.0,
+                "z": 0.0
+            }
+        },
+        {
+            "name": "cube",
+            "how_many": 1,
+            "position": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 2.5
+            },
+            "rotation": {
+                "x": 0.0,
                 "y": 0.0,
                 "z": 0.0
             }

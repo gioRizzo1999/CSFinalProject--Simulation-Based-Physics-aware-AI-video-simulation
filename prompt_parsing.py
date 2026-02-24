@@ -26,27 +26,34 @@ import sys
 # "Extract relevant data in the prompt and put it in the following format:" \
 # ""
 
-user_prompt = sys.argv[1]
-# user_prompt = "a realistic sphere falling from above over an inclined plane 30 degrees, minimal scene, realistic layout and motion."
+# user_prompt = sys.argv[1]
+user_prompt = "a realistic cube falling from above over an inclined plane 30 degrees, minimal scene, realistic layout and motion."
 
 
-tuning= """ Based on the description of the scene, produce a JSON file that matches the following schema, Use the same keys, Replace example values with values you deem appropriate to the scene: {
-  "objects": [
-    {
-      "name": "string, choose between plane, sphere, cube",
-      "how_many": int,
-      "position": { "x": radians, "y": radians, "z": radians },
-      "rotation": { "x": radians, "y": radians, "z": radians }
-    },
-    {
-      "name": "string, choose between plane, sphere, cube",
-      "how_many": int,
-      "position": { "x": radians, "y": radians, "z": radians },
-      "rotation": { "x": radians, "y": radians, "z": radians }
-    }
-  ]
-}
+# tuning= """ Based on the description of the scene, produce a JSON file that matches the following schema, Use the same keys, Replace example values with values you deem appropriate to the scene: {
+#   "objects": [
+#     {
+#       "name": "string, choose between plane, sphere, cube",
+#       "how_many": int,
+#       "position": { "x": radians, "y": radians, "z": radians },
+#       "rotation": { "x": radians, "y": radians, "z": radians }
+#     },
+#     {
+#       "name": "string, choose between plane, sphere, cube",
+#       "how_many": int,
+#       "position": { "x": radians, "y": radians, "z": radians },
+#       "rotation": { "x": radians, "y": radians, "z": radians }
+#     }
+#   ]
+# }
+# """
+
+tuning= """ Based on the scene description, output ONLY a valid JSON object matching exactly this schema (same keys). Do not add any text before/after the JSON and do not use markdown.
+Units: position is in meters (x,y in [-2,2], z in [0,3]); rotation is in radians (x,y,z in [-3.14,3.14]).
+Constraints: name must be one of ["plane","sphere","cube"]; how_many must be an integer in [1,3].
+Schema: { "objects":[ { "name":"plane|sphere|cube", "how_many": 1, "position":{"x":0.0,"y":0.0,"z":0.0}, "rotation":{"x":0.0,"y":0.0,"z":0.0} } ] }
 """
+
 full_prompt = f"""{user_prompt} {tuning}""" 
 
 response: ChatResponse = chat(model='qwen3-coder:480b-cloud', messages=[
@@ -70,17 +77,16 @@ resp = response.message.content.strip()
 start = resp.find("{")
 end = resp.rfind("}") + 1
 
-if start == -1 or end == 0:
+# format checks
+if start == -1 or end <= start:
     raise ValueError(f"No JSON found: \n{resp}")
 
 only_json = resp[start:end]
-parsed_json = json.loads(only_json)
 
-
-#select only content between curly brackets
-# input_string = string
-# isolated_string = input_string.split('{')[1].split('}')[0]
-# print(isolated_string)  
+try:
+    parsed_json = json.loads(only_json)
+except json.JSONDecodeError:
+    raise ValueError(f"Invalid JSON:\n{only_json}")
 
 # write to file
 with open("parsed_json.json", "w") as file:

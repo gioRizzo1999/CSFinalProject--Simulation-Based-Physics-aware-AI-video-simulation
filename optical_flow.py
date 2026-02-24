@@ -12,6 +12,8 @@ os.makedirs(flow_folder, exist_ok=True)
 depth_frames = sorted([frame for frame in os.listdir(depth_folder) if frame.endswith(".png")])
 resolution = (320, 240) 
 
+SIZE = (320, 240) 
+
 
 # ensure that depth frames are greyscaled if not already
 def grayscale_from_depth(frame):
