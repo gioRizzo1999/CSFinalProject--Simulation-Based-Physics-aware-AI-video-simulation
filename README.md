@@ -14,9 +14,3 @@ Potential solutions are being researched and developed, and while there is progr
 This project aims to build an AI orchestration pipeline and offer a solution to this problem by leveraging a physics simulator and control maps, in order to inform and constrain the generation process of a video generative model. The user should be able to describe the scene with a prompt, specify important physical parameters, and obtain a physically correct generated scene.
 The scope of this project is limited to short, simple scenes and aims to demonstrate the utility of this physics-simulated control-maps approach in the context of educational simulations and physical experiments, where precision and motion control are fundamental.
 This project is based on template 4.1: Orchestrating AI Models to Achieve a Goal.
-
-
-
-## important commands
-compile frames into video:
-ffmpeg -framerate 8 -i generated_stableDiff/gen_depth_frame_%04d.png -c:v libx264 -pix_fmt yuv420p input_video.mp4

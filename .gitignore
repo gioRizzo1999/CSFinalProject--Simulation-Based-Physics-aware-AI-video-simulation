@@ -7,5 +7,5 @@ generated/
 *.json
 *.npy
 *.png
-flow/
-*.npy
+
+
