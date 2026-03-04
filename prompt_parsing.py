@@ -27,7 +27,7 @@ import sys
 # ""
 
 # user_prompt = sys.argv[1]
-user_prompt = "a realistic cube falling from above over an inclined plane 30 degrees, minimal scene, realistic layout and motion."
+user_prompt = "a red cube made in plastic falling from above over an inclined plane 30 degrees, minimal scene, realistic layout and motion."
 
 
 # tuning= """ Based on the description of the scene, produce a JSON file that matches the following schema, Use the same keys, Replace example values with values you deem appropriate to the scene: {
