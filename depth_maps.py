@@ -21,8 +21,7 @@ midas = torch.hub.load("intel-isl/MiDaS", "DPT_Hybrid", trust_repo=True).to(devi
 midas.eval()
 
 model_tranforms = torch.hub.load("intel-isl/MiDaS", "transforms", trust_repo=True)
-transform = model_tranforms.small_transform
-
+transform = model_tranforms.dpt_transform
 
 # processing all frames 
 for frame in sorted(os.listdir(frames_folder)):
@@ -40,7 +39,7 @@ for frame in sorted(os.listdir(frames_folder)):
         prediction = torch.nn.functional.interpolate(
             prediction.unsqueeze(1),
             size=img.shape[:2],
-            mode="bicubic",
+            mode="bilinear",
             align_corners=False,
         ).squeeze()
 
