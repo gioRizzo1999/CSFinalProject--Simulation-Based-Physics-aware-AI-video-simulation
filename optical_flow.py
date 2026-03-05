@@ -26,8 +26,8 @@ for i in range(len(depth_frames) - 1):
     frame2 = grayscale_from_depth(cv2.imread(dir2, cv2.IMREAD_GRAYSCALE))
 
     # resize depth to match generation resolution
-    frame1norm = cv2.resize(frame1norm, resolution, interpolation=cv2.INTER_AREA)
-    frame2norm = cv2.resize(frame2norm, resolution, interpolation=cv2.INTER_AREA)
+    frame1norm = cv2.resize(frame1, resolution, interpolation=cv2.INTER_AREA)
+    frame2norm = cv2.resize(frame1, resolution, interpolation=cv2.INTER_AREA)
 
     flow_frames = cv2.calcOpticalFlowFarneback(frame1norm, frame2norm, None, 0.5, 3, 15, 3, 5, 1.2, 0)
     np.save(os.path.join(flow_folder, f"flow_{i:04d}.npy"), flow_frames)
