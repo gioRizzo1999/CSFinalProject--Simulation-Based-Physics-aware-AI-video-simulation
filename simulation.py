@@ -10,8 +10,9 @@ p.connect(p.DIRECT)  # No GUI, faster for frame extraction
 p.setGravity(0, 0, -9.8)
 p.setAdditionalSearchPath(pybullet_data.getDataPath())
 
-# create output folder
+# create output folders
 os.makedirs("frames", exist_ok=True)
+os.makedirs("segmentation", exist_ok=True)
 
 #------------------------------------- scene specs:
 # what objects to load
@@ -94,10 +95,16 @@ for i in range(num_frames):
     p.stepSimulation()
 
     # get camera image
-    img = p.getCameraImage(width, height, view, proj)
+    img = p.getCameraImage(width, height, view, proj, renderer=p.ER_TINY_RENDERER)
     rgb = np.reshape(img[2], (height, width, 4))[:, :, :3]
+    seg_maps = np.reshape(img[4], (height, width))
+    object_ids = seg_maps % (1 << 24)
+    seg_img = cv2.normalize(object_ids.astype(np.float32), None, 0, 255, cv2.NORM_MINMAX)
+    seg_img = seg_img.astype(np.uint8)
 
-    # save frame
+    # save frames and maps
     cv2.imwrite(f"frames/frame_{i:04d}.png", rgb)
+    cv2.imwrite(f"segmentation/seg_{i:04d}.png", seg_img)
+    np.save(f"segmentation/seg_{i:04d}.npy", object_ids)
 
 p.disconnect()
