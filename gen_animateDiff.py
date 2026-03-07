@@ -49,7 +49,7 @@ flow_parsed = [
     for f in flow_frames
 ]
 seg_parsed = [
-    Image.open(os.path.join(input_seg, f)).convert("L").resize(resolution).convert("RGB")
+    Image.open(os.path.join(input_seg, f)).convert("RGB").resize(resolution, Image.NEAREST)
     for f in seg_frames
 ]
 
@@ -160,10 +160,16 @@ guidance_scale_2 = 5.5
 strength_2 = 0.35
 num_inference_steps_2 = 24
 
+inject_flow = [
+    Image.blend(repainted[i].convert("RGB"), flow_parsed[i].resize(repainted[i].size).convert("RGB"), alpha=0.15)
+    if i < len(flow_parsed) else repainted[i]
+    for i in range(len(repainted))
+]
+
 # generation function
 with torch.inference_mode():
     result = coherence_pipeline(
-        video=repainted,
+        video=inject_flow,
         prompt=prompt,
         negative_prompt=negative_prompt,
         strength=strength_2,
