@@ -26,7 +26,7 @@ input_edges = "edges"
 input_flow = "flow"
 input_seg = "segmentation"
 output_path = "scriptOutput.gif"
-resolution = (540, 540)
+resolution = (512, 384)
 frames_num = 4
 
 

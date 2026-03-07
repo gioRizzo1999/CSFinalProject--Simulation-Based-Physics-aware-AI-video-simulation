@@ -74,7 +74,7 @@ for k, v in found.items():
 
 
 # camera setup
-width, height = 640, 480
+width, height = 512, 384
 view = p.computeViewMatrix(
     cameraEyePosition=[3, 0, 1],
     cameraTargetPosition=[0, 0, 0],

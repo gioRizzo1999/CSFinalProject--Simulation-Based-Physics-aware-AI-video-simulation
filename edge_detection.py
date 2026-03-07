@@ -10,9 +10,7 @@ os.makedirs(edges_folder, exist_ok=True)
 
 # input
 depth_frames = sorted([frame for frame in os.listdir(depth_folder) if frame.endswith(".png")])
-resolution = (320, 240) 
-
-SIZE = (320, 240) 
+resolution = (512, 384) 
 
 
 for i in range(len(depth_frames) - 1):

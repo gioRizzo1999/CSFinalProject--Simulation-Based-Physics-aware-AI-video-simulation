@@ -10,9 +10,7 @@ os.makedirs(flow_folder, exist_ok=True)
 
 # input
 depth_frames = sorted([frame for frame in os.listdir(depth_folder) if frame.endswith(".png")])
-resolution = (320, 240) 
-
-SIZE = (320, 240) 
+resolution = (512,384) 
 
 
 # ensure that depth frames are greyscaled if not already
@@ -27,7 +25,7 @@ for i in range(len(depth_frames) - 1):
 
     # resize depth to match generation resolution
     frame1norm = cv2.resize(frame1, resolution, interpolation=cv2.INTER_AREA)
-    frame2norm = cv2.resize(frame1, resolution, interpolation=cv2.INTER_AREA)
+    frame2norm = cv2.resize(frame2, resolution, interpolation=cv2.INTER_AREA)
 
     flow_frames = cv2.calcOpticalFlowFarneback(frame1norm, frame2norm, None, 0.5, 3, 15, 3, 5, 1.2, 0)
     np.save(os.path.join(flow_folder, f"flow_{i:04d}.npy"), flow_frames)
