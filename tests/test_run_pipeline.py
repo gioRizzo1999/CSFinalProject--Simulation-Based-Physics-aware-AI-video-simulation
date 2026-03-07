@@ -15,7 +15,9 @@ def test_scripts_order():
         call([exec, "simulation.py"], check=True),
         call([exec, "depth_maps.py"], check=True),
         call([exec, "optical_flow.py"], check=True),
+        call([exec, "edge_detection.py"], check=True),
         call([exec, "gen_animateDiff.py"], check=True),
     ]
     assert output == "output.gif"
+
 

@@ -1,7 +1,9 @@
-# Going for two steps process. generate constrained frames, thenmake transition smoother between them
+# Two steps process. generate constrained frames, then make transition smoother between them
+# Add all control maps as guide, tweak gen parameters, optionally add API to increase frames capacity
 import torch
 import os
 from PIL import Image
+import sys
 from diffusers import (
     ControlNetModel,
     MotionAdapter,
@@ -19,26 +21,59 @@ device = "mps" if torch.backends.mps.is_available() else "cpu"
 generator = torch.Generator(device="cpu").manual_seed(42)
 
 # folders
-input_maps = "depth"
+input_depth = "depth"
+input_edges = "edges"
+input_flow = "flow"
+input_seg = "segmentation"
 output_path = "scriptOutput.gif"
 resolution = (540, 540)
 frames_num = 4
 
 
 # load conditioning frames
-input_frames = [f for f in sorted(os.listdir(input_maps)) if f.lower().endswith((".png",".jpg",".jpeg"))][:frames_num]
-parsed_frames = [
-    Image.open(os.path.join(input_maps, f)).convert("L").resize(resolution).convert("RGB")
-    for f in input_frames
+depth_frames = [f for f in sorted(os.listdir(input_depth)) if f.lower().endswith((".png",".jpg",".jpeg"))][:frames_num]
+edges_frames = [f for f in sorted(os.listdir(input_edges)) if f.lower().endswith((".png",".jpg",".jpeg"))][:frames_num]
+flow_frames = [f for f in sorted(os.listdir(input_flow)) if f.lower().endswith((".png",".jpg",".jpeg"))][:frames_num]
+seg_frames = [f for f in sorted(os.listdir(input_seg)) if f.lower().endswith((".png",".jpg",".jpeg"))][:frames_num]
+
+depth_parsed = [
+    Image.open(os.path.join(input_depth, f)).convert("L").resize(resolution).convert("RGB")
+    for f in depth_frames
 ]
+edges_parsed = [
+    Image.open(os.path.join(input_edges, f)).convert("L").resize(resolution).convert("RGB")
+    for f in edges_frames
+]
+flow_parsed = [
+    Image.open(os.path.join(input_flow, f)).convert("L").resize(resolution).convert("RGB")
+    for f in flow_frames
+]
+seg_parsed = [
+    Image.open(os.path.join(input_seg, f)).convert("L").resize(resolution).convert("RGB")
+    for f in seg_frames
+]
+
+control_maps = [depth_parsed, edges_parsed, seg_parsed]
 
 # models
 base_model = "Lykon/dreamshaper-8"
 
-controlnet = ControlNetModel.from_pretrained(
+depth_controlnet = ControlNetModel.from_pretrained(
     "lllyasviel/control_v11f1p_sd15_depth",
     torch_dtype=torch.float32,
 )
+
+edges_controlnet = ControlNetModel.from_pretrained(
+    "lllyasviel/control_v11p_sd15_canny",
+    torch_dtype=torch.float32,
+)
+
+seg_controlnet = ControlNetModel.from_pretrained(
+    "lllyasviel/control_v11p_sd15_seg",
+    torch_dtype=torch.float32,
+)
+
+controlnet = [depth_controlnet, edges_controlnet, seg_controlnet]
 
 adapter = MotionAdapter.from_pretrained(
     "guoyww/animatediff-motion-adapter-v1-5-2",
@@ -46,7 +81,8 @@ adapter = MotionAdapter.from_pretrained(
 )
 
 # prompts
-prompt = "a single red cube at the top of the screen, falling down above a blue inclined plane, minimal scene, fixed camera, sharp details"
+# prompt = sys.argv[1]
+prompt = "a blue soccer football sliding down a green inclined plane, minimal scene, fixed camera, sharp details"
 negative_prompt = "duplicate, extra objects, blur, motion blur, flicker, noise, artifacts, text"
 
 
@@ -68,7 +104,9 @@ repaint_pipeline.scheduler = DDIMScheduler.from_config(
 # diffusion knobs pipeline 1
 strength = 0.45
 guidance_scale_1 = 6.5
-controlnet_conditioning_scale_1 = 1.1
+cond_scale_depth = 1.1
+cond_scale_edge = 1.1
+cond_scale_seg = 1.1
 num_inference_steps_1 = 24
 prev_blend = 0.15
 
@@ -76,22 +114,26 @@ repainted = []
 prev = None
 
 with torch.inference_mode():
-    for c in parsed_frames:
-        init = prev if prev is not None else c
+    for i in range(frames_num):
+        depth_f = depth_parsed[i]
+        edge_f = edges_parsed[i]
+        seg_f = seg_parsed[i]
+        init = prev if prev is not None else depth_f
+
         if prev is not None:
-            c = c.resize(prev.size).convert("RGB")
-            prev = prev.convert("RGB")
-            init = Image.blend(prev, c, alpha=prev_blend)
+            prev = prev.convert("RGB").resize(resolution)
+            depth_f = depth_f.convert("RGB").resize(prev.size)
+            init = Image.blend(prev, depth_f, alpha=prev_blend)
 
         img = repaint_pipeline(
             prompt=prompt,
             negative_prompt=negative_prompt,
             image=init,
-            control_image=c,
+            control_image=[depth_f, edge_f, seg_f],
             strength=strength,
             num_inference_steps=num_inference_steps_1,
             guidance_scale=guidance_scale_1,
-            controlnet_conditioning_scale=controlnet_conditioning_scale_1,
+            controlnet_conditioning_scale=[cond_scale_depth, cond_scale_edge, cond_scale_seg],
             generator=generator,
         ).images[0]
 

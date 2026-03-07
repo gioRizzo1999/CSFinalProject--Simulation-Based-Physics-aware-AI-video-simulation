@@ -9,18 +9,18 @@
                 "z": 0.0
             },
             "rotation": {
-                "x": -0.52,
+                "x": -0.5,
                 "y": 0.0,
                 "z": 0.0
             }
         },
         {
-            "name": "cube",
+            "name": "sphere",
             "how_many": 1,
             "position": {
                 "x": 0.0,
                 "y": 0.0,
-                "z": 2.5
+                "z": 1.5
             },
             "rotation": {
                 "x": 0.0,

@@ -26,8 +26,8 @@ import sys
 # "Extract relevant data in the prompt and put it in the following format:" \
 # ""
 
-# user_prompt = sys.argv[1]
-user_prompt = "a red cube made in plastic falling from above over an inclined plane 30 degrees, minimal scene, realistic layout and motion."
+user_prompt = sys.argv[1]
+# user_prompt = "a blue soccer football sliding down an inclined plane 30 degrees, minimal scene, realistic layout and motion."
 
 
 # tuning= """ Based on the description of the scene, produce a JSON file that matches the following schema, Use the same keys, Replace example values with values you deem appropriate to the scene: {
