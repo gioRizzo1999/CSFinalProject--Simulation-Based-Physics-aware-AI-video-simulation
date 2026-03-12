@@ -6,13 +6,15 @@ import os
 import json
 
 
-p.connect(p.DIRECT)  # No GUI, faster for frame extraction
+p.connect(p.DIRECT)
 p.setGravity(0, 0, -9.8)
 p.setAdditionalSearchPath(pybullet_data.getDataPath())
+physics_steps = 240
+ai_video_fps = 24
+steps_per_frame = max(1, int(physics_steps / ai_video_fps))
+p.setTimeStep(1.0 / physics_steps)
 
-# create output folders
-os.makedirs("frames", exist_ok=True)
-os.makedirs("segmentation", exist_ok=True)
+os.system("rm -rf frames segmentation flow edges depth && mkdir -p frames segmentation flow edges depth")
 
 #------------------------------------- scene specs:
 # what objects to load
@@ -39,7 +41,8 @@ COLOR_BY_OBJECT = {
 }
 found = {"plane": False, "sphere": False, "cube": False}
 # loop over all objects and add to simulation if present
-for o in objects:
+objects_ordered = sorted(objects, key=lambda o: 0 if o.get("name") == "plane" else 1)
+for o in objects_ordered:
     name = o.get("name")
     if name not in OBJ_DICT:
         continue
@@ -62,6 +65,11 @@ for o in objects:
         obj_pos,
         p.getQuaternionFromEuler(obj_rot)
     )
+    if name != "plane":
+        p.resetBaseVelocity(obj_id, [0, 0, 0], [0, 0, 0])
+        p.changeDynamics(obj_id, -1, linearDamping=0.04, angularDamping=0.04, restitution=0.4)
+    else:
+        p.changeDynamics(obj_id, -1, restitution=0.4)
     color = COLOR_BY_OBJECT.get(name, [0.7,0.7,0.7,1])
     try:
         p.changeVisualShape(obj_id, -1, rgbaColor=color, textureUniqueId=-1)
@@ -70,7 +78,7 @@ for o in objects:
 # print absent objects
 for k, v in found.items():
     if not v:
-        print(f"No {k}")
+        print(f"no {k}")
 
 
 # camera setup
@@ -89,10 +97,11 @@ proj = p.computeProjectionMatrixFOV(
 
 # simulation loop
 
-num_frames = 100  
+num_frames = 40
 #------------------------------------------
 for i in range(num_frames):
-    p.stepSimulation()
+    for _ in range(steps_per_frame):
+        p.stepSimulation()
 
     # get camera image
     img = p.getCameraImage(width, height, view, proj, renderer=p.ER_TINY_RENDERER)

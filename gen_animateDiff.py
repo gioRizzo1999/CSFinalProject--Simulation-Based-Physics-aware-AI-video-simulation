@@ -11,7 +11,7 @@ from diffusers import (
     AnimateDiffVideoToVideoPipeline,
     DDIMScheduler,
 )
-from diffusers.utils import export_to_gif
+from diffusers.utils import export_to_gif, export_to_video
 
 
 # setting backend
@@ -25,7 +25,7 @@ input_depth = "depth"
 input_edges = "edges"
 input_flow = "flow"
 input_seg = "segmentation"
-output_path = "scriptOutput.gif"
+output_path = "scriptOutput.mp4"
 resolution = (512, 384)
 frames_num = 4
 
@@ -102,13 +102,13 @@ repaint_pipeline.scheduler = DDIMScheduler.from_config(
 )
 
 # diffusion knobs pipeline 1
-strength = 0.45
-guidance_scale_1 = 6.5
-cond_scale_depth = 1.1
-cond_scale_edge = 1.1
-cond_scale_seg = 1.1
-num_inference_steps_1 = 24
-prev_blend = 0.15
+strength = 0.4
+guidance_scale_1 = 6.4
+cond_scale_depth = 1.25
+cond_scale_edge = 1.15
+cond_scale_seg = 1.0
+num_inference_steps_1 = 28
+prev_blend = 0.0
 
 repainted = []
 prev = None
@@ -122,7 +122,7 @@ with torch.inference_mode():
 
         if prev is not None:
             prev = prev.convert("RGB").resize(resolution)
-            depth_f = depth_f.convert("RGB").resize(prev.size)
+            depth_f = depth_f.convert("RGB")
             init = Image.blend(prev, depth_f, alpha=prev_blend)
 
         img = repaint_pipeline(
@@ -156,12 +156,12 @@ coherence_pipeline.scheduler = DDIMScheduler.from_config(
 )
 
 # diffusion knobs pipeline 2
-guidance_scale_2 = 5.5
-strength_2 = 0.35
-num_inference_steps_2 = 24
+guidance_scale_2 = 3.6
+strength_2 = 0.2
+num_inference_steps_2 = 5
 
 inject_flow = [
-    Image.blend(repainted[i].convert("RGB"), flow_parsed[i].resize(repainted[i].size).convert("RGB"), alpha=0.15)
+    Image.blend(repainted[i].convert("RGB"), flow_parsed[i].resize(repainted[i].size).convert("RGB"), alpha=0.0)
     if i < len(flow_parsed) else repainted[i]
     for i in range(len(repainted))
 ]
@@ -180,5 +180,6 @@ with torch.inference_mode():
 output_frames = result.frames[0]
 
 # save to file
-export_to_gif(output_frames, output_path, fps=8)
+output_frames = [f.convert("RGB").resize(resolution) for f in output_frames]
+export_to_video(output_frames, output_path, fps=24, quality=9)
 print("Output:", output_path)

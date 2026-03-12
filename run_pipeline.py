@@ -7,8 +7,8 @@ import subprocess
 import sys
 
 def run_pipeline(user_prompt):
-    subprocess.run([sys.executable, "prompt_parsing.py", user_prompt], check=True)
-    subprocess.run([sys.executable, "simulation.py"], check=True)
+    # subprocess.run([sys.executable, "prompt_parsing.py", user_prompt], check=True)
+    # subprocess.run([sys.executable, "simulation.py"], check=True)
     subprocess.run([sys.executable, "depth_maps.py"], check=True)
     subprocess.run([sys.executable, "optical_flow.py"], check=True)
     subprocess.run([sys.executable, "edge_detection.py"], check=True)

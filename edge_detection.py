@@ -19,7 +19,7 @@ for i in range(len(depth_frames) - 1):
     frame = cv2.GaussianBlur(frame, (3, 3), 0)
     frame_norm = cv2.resize(frame, resolution, interpolation=cv2.INTER_AREA)
 
-    edges = cv2.Canny(frame_norm,25,75)
+    edges = cv2.Canny(frame_norm,40,120)
     output = os.path.join(edges_folder, f"edge_{i:04d}.png")
     cv2.imwrite(output, edges)
 

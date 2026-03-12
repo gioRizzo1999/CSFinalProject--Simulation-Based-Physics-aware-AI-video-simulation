@@ -5,6 +5,10 @@ Run these commands in a terminal:
 conda env create -f environment.yml
 conda activate sim2vid
 
+## to compact simulation frames into video for comparison 
+ffmpeg -framerate 24 -i frames/frame_%04d.png -pix_fmt yuv420p -c:v libx264 output.mp4
+
+
 
 ## introduction and motivations
 
