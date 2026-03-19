@@ -1,9 +1,9 @@
-# Two steps process. generate constrained frames, then make transition smoother between them
-# Add all control maps as guide, tweak gen parameters, optionally add API to increase frames capacity
-import torch
+# AnimateDiff pipeline, added first-frame stabilization and chunking for generating more frames.
 import os
-from PIL import Image
 import sys
+import numpy as np
+import torch
+from PIL import Image
 from diffusers import (
     ControlNetModel,
     MotionAdapter,
@@ -11,13 +11,11 @@ from diffusers import (
     AnimateDiffVideoToVideoPipeline,
     DDIMScheduler,
 )
-from diffusers.utils import export_to_gif, export_to_video
+from diffusers.utils import export_to_video
 
 
 # setting backend
 device = "mps" if torch.backends.mps.is_available() else "cpu"
-
-# fixed seed for deterministic outputs
 generator = torch.Generator(device="cpu").manual_seed(42)
 
 # folders
@@ -25,16 +23,31 @@ input_depth = "depth"
 input_edges = "edges"
 input_flow = "flow"
 input_seg = "segmentation"
-output_path = "scriptOutput.mp4"
+output_path = "output_long.mp4"
+style_anchor_path = os.path.join("style_anchor", "anchor_image.png")
 resolution = (512, 384)
-frames_num = 4
 
+# chunking 
+chunk_length = 4
+chunk_intersection = 1
+
+# anchor-frame strength
+style_anchor_blend = 0.12
 
 # load conditioning frames
-depth_frames = [f for f in sorted(os.listdir(input_depth)) if f.lower().endswith((".png",".jpg",".jpeg"))][:frames_num]
-edges_frames = [f for f in sorted(os.listdir(input_edges)) if f.lower().endswith((".png",".jpg",".jpeg"))][:frames_num]
-flow_frames = [f for f in sorted(os.listdir(input_flow)) if f.lower().endswith((".png",".jpg",".jpeg"))][:frames_num]
-seg_frames = [f for f in sorted(os.listdir(input_seg)) if f.lower().endswith((".png",".jpg",".jpeg"))][:frames_num]
+depth_files = [f for f in sorted(os.listdir(input_depth)) if f.lower().endswith((".png", ".jpg", ".jpeg"))]
+edges_files = [f for f in sorted(os.listdir(input_edges)) if f.lower().endswith((".png", ".jpg", ".jpeg"))]
+flow_files = [f for f in sorted(os.listdir(input_flow)) if f.lower().endswith((".png", ".jpg", ".jpeg"))]
+seg_files = [f for f in sorted(os.listdir(input_seg)) if f.lower().endswith((".png", ".jpg", ".jpeg"))]
+
+frames_num = min(len(depth_files), len(edges_files), len(seg_files))
+if frames_num == 0:
+    raise ValueError("No control maps frames found.")
+
+depth_frames = depth_files[:frames_num]
+edges_frames = edges_files[:frames_num]
+flow_frames = flow_files[:frames_num]
+seg_frames = seg_files[:frames_num]
 
 depth_parsed = [
     Image.open(os.path.join(input_depth, f)).convert("L").resize(resolution).convert("RGB")
@@ -52,8 +65,24 @@ seg_parsed = [
     Image.open(os.path.join(input_seg, f)).convert("RGB").resize(resolution, Image.NEAREST)
     for f in seg_frames
 ]
+obj_ids = [
+    np.load(os.path.join(input_seg, os.path.splitext(f)[0] + ".npy"))
+    for f in seg_frames
+]
+#block below selects ids of objects that are not background or plane to leave them unblended from the style-anchor frame
+non_background_objects = set()
 
-control_maps = [depth_parsed, edges_parsed, seg_parsed]
+def seg_resize(seg):
+    if seg.shape[:2] != (resolution[1], resolution[0]):
+        seg = np.array(Image.fromarray(seg).resize(resolution, Image.NEAREST))
+    return seg
+
+obj_ids = [seg_resize(obj) for obj in obj_ids]
+for obj in obj_ids:
+    non_background_objects.update(int(v) for v in np.unique(obj) if v >= 1 and v != 16777215)
+non_background_obj_array = np.array(sorted(non_background_objects), dtype=np.int64) if non_background_objects else None
+
+style_anchor = Image.open(style_anchor_path).convert("RGB").resize(resolution) if os.path.exists(style_anchor_path) else None
 
 # models
 base_model = "Lykon/dreamshaper-8"
@@ -62,17 +91,14 @@ depth_controlnet = ControlNetModel.from_pretrained(
     "lllyasviel/control_v11f1p_sd15_depth",
     torch_dtype=torch.float32,
 )
-
 edges_controlnet = ControlNetModel.from_pretrained(
     "lllyasviel/control_v11p_sd15_canny",
     torch_dtype=torch.float32,
 )
-
 seg_controlnet = ControlNetModel.from_pretrained(
     "lllyasviel/control_v11p_sd15_seg",
     torch_dtype=torch.float32,
 )
-
 controlnet = [depth_controlnet, edges_controlnet, seg_controlnet]
 
 adapter = MotionAdapter.from_pretrained(
@@ -81,8 +107,8 @@ adapter = MotionAdapter.from_pretrained(
 )
 
 # prompts
-# prompt = sys.argv[1]
-prompt = "a blue soccer football sliding down a green inclined plane, minimal scene, fixed camera, sharp details"
+default_prompt = "a blue soccer ball falling down a green inclined surface, minimal scene, fixed camera, empty background."
+prompt = sys.argv[1] if len(sys.argv) > 1 else default_prompt
 negative_prompt = "duplicate, extra objects, blur, motion blur, flicker, noise, artifacts, text"
 
 
@@ -94,20 +120,18 @@ repaint_pipeline = StableDiffusionControlNetImg2ImgPipeline.from_pretrained(
     safety_checker=None,
     feature_extractor=None,
 ).to(device)
-
 repaint_pipeline.enable_attention_slicing()
 repaint_pipeline.enable_vae_slicing()
 repaint_pipeline.scheduler = DDIMScheduler.from_config(
     repaint_pipeline.scheduler.config
 )
 
-# diffusion knobs pipeline 1
 strength = 0.4
-guidance_scale_1 = 6.4
+guidance_scale_1 = 6.1
 cond_scale_depth = 1.25
 cond_scale_edge = 1.15
 cond_scale_seg = 1.0
-num_inference_steps_1 = 28
+num_inference_steps_1 = 18
 prev_blend = 0.0
 
 repainted = []
@@ -122,8 +146,14 @@ with torch.inference_mode():
 
         if prev is not None:
             prev = prev.convert("RGB").resize(resolution)
-            depth_f = depth_f.convert("RGB")
+            depth_f = depth_f.convert("RGB").resize(resolution)
             init = Image.blend(prev, depth_f, alpha=prev_blend)
+
+            if style_anchor is not None and non_background_obj_array is not None:
+                obj_id = obj_ids[i]
+                anchor_area = ~np.isin(obj_id, non_background_obj_array)
+                anchor_area = Image.fromarray((anchor_area * 255).astype("uint8")).convert("L").resize(resolution, Image.NEAREST)
+                init = Image.composite(style_anchor, init, anchor_area)
 
         img = repaint_pipeline(
             prompt=prompt,
@@ -139,8 +169,18 @@ with torch.inference_mode():
 
         repainted.append(img)
         prev = img
+        if style_anchor is None:
+            style_anchor = img.convert("RGB").resize(resolution)
 
 
+# free stage 1 memory before stage 2
+del repaint_pipeline
+del controlnet
+del depth_controlnet
+del edges_controlnet
+del seg_controlnet
+if device == "mps":
+    torch.mps.empty_cache()
 
 # Step 2: temporal coherence between frames
 coherence_pipeline = AnimateDiffVideoToVideoPipeline.from_pretrained(
@@ -148,15 +188,11 @@ coherence_pipeline = AnimateDiffVideoToVideoPipeline.from_pretrained(
     motion_adapter=adapter,
     torch_dtype=torch.float32,
 ).to(device)
-
 coherence_pipeline.enable_attention_slicing()
 coherence_pipeline.enable_vae_slicing()
-coherence_pipeline.scheduler = DDIMScheduler.from_config(
-    coherence_pipeline.scheduler.config
-)
+coherence_pipeline.scheduler = DDIMScheduler.from_config(coherence_pipeline.scheduler.config)
 
-# diffusion knobs pipeline 2
-guidance_scale_2 = 3.6
+guidance_scale_2 = 3.2
 strength_2 = 0.2
 num_inference_steps_2 = 5
 
@@ -166,10 +202,9 @@ inject_flow = [
     for i in range(len(repainted))
 ]
 
-# generation function
-with torch.inference_mode():
+def process_chunk(chunk):
     result = coherence_pipeline(
-        video=inject_flow,
+        video=chunk,
         prompt=prompt,
         negative_prompt=negative_prompt,
         strength=strength_2,
@@ -177,9 +212,23 @@ with torch.inference_mode():
         guidance_scale=guidance_scale_2,
         generator=generator,
     )
-output_frames = result.frames[0]
+    return result.frames[0]
 
-# save to file
-output_frames = [f.convert("RGB").resize(resolution) for f in output_frames]
-export_to_video(output_frames, output_path, fps=24, quality=9)
+output_frames = []
+jump = max(1, chunk_length - chunk_intersection)
+start = 0
+last_end = 0
+while start < len(inject_flow):
+    stop = min(start + chunk_length, len(inject_flow))
+    c_frames = process_chunk(inject_flow[start:stop])
+    shared_count = max(0, last_end - start)
+    c_frames = c_frames[shared_count:]
+    output_frames.extend(c_frames)
+    last_end = stop
+    if stop == len(inject_flow):
+        break
+    start += jump
+
+final_frames = [frame.convert("RGB").resize(resolution) for frame in output_frames]
+export_to_video(final_frames, output_path, fps=24, quality=9)
 print("Output:", output_path)

@@ -1,7 +1,13 @@
 .venv/
+.vscode/
+__pycache__/
 depth/
 frames/
-generated/
+edges/
+flow/
+segmentation/
+style_anchor/
+
 *.mp4
 *.gif
 *.json

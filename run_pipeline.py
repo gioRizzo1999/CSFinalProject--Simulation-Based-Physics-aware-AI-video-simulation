@@ -12,7 +12,7 @@ def run_pipeline(user_prompt):
     subprocess.run([sys.executable, "depth_maps.py"], check=True)
     subprocess.run([sys.executable, "optical_flow.py"], check=True)
     subprocess.run([sys.executable, "edge_detection.py"], check=True)
-    subprocess.run([sys.executable, "gen_animateDiff.py", user_prompt], check=True)
+    subprocess.run([sys.executable, "video_gen_long.py", user_prompt], check=True)
 
     return "out_local.gif"
 

@@ -9,7 +9,7 @@ import json
 p.connect(p.DIRECT)
 p.setGravity(0, 0, -9.8)
 p.setAdditionalSearchPath(pybullet_data.getDataPath())
-physics_steps = 240
+physics_steps = 60
 ai_video_fps = 24
 steps_per_frame = max(1, int(physics_steps / ai_video_fps))
 p.setTimeStep(1.0 / physics_steps)
@@ -21,6 +21,20 @@ os.system("rm -rf frames segmentation flow edges depth && mkdir -p frames segmen
 # dimension, position, rotation
 # camera position and rotation
 # number of frames
+
+# camera setup
+width, height = 512, 384
+view = p.computeViewMatrix(
+    cameraEyePosition=[3, 0, 1],
+    cameraTargetPosition=[0, 0, 0],
+    cameraUpVector=[0, 0, 1],
+)
+proj = p.computeProjectionMatrixFOV(
+    fov=60,
+    aspect=width / height,
+    nearVal=0.1,
+    farVal=10.0
+)
 
 # import json file with scene data
 with open("parsed_json.json", "r") as f:
@@ -75,29 +89,21 @@ for o in objects_ordered:
         p.changeVisualShape(obj_id, -1, rgbaColor=color, textureUniqueId=-1)
     except TypeError:
         p.changeVisualShape(obj_id, -1, rgbaColor=color)
+    if name == "plane":
+        os.makedirs("style_anchor", exist_ok=True)
+        rgb = np.reshape(p.getCameraImage(width, height, view, proj, renderer=p.ER_TINY_RENDERER)[2], (height, width, 4))[:, :, :3]
+        cv2.imwrite("style_anchor/anchor_image.png", rgb)
+
+
 # print absent objects
 for k, v in found.items():
     if not v:
         print(f"no {k}")
 
 
-# camera setup
-width, height = 512, 384
-view = p.computeViewMatrix(
-    cameraEyePosition=[3, 0, 1],
-    cameraTargetPosition=[0, 0, 0],
-    cameraUpVector=[0, 0, 1],
-)
-proj = p.computeProjectionMatrixFOV(
-    fov=60,
-    aspect=width / height,
-    nearVal=0.1,
-    farVal=10.0
-)
-
 # simulation loop
 
-num_frames = 40
+num_frames = 50
 #------------------------------------------
 for i in range(num_frames):
     for _ in range(steps_per_frame):
