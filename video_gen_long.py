@@ -23,16 +23,13 @@ input_depth = "depth"
 input_edges = "edges"
 input_flow = "flow"
 input_seg = "segmentation"
-output_path = "output_long.mp4"
+output_path = "output_long_test5.mp4"
 style_anchor_path = os.path.join("style_anchor", "anchor_image.png")
 resolution = (512, 384)
 
 # chunking 
 chunk_length = 4
-chunk_intersection = 1
-
-# anchor-frame strength
-style_anchor_blend = 0.12
+chunk_intersection = 3
 
 # load conditioning frames
 depth_files = [f for f in sorted(os.listdir(input_depth)) if f.lower().endswith((".png", ".jpg", ".jpeg"))]
@@ -107,7 +104,7 @@ adapter = MotionAdapter.from_pretrained(
 )
 
 # prompts
-default_prompt = "a blue soccer ball falling down a green inclined surface, minimal scene, fixed camera, empty background."
+default_prompt = "a basketball ball orange colored, nba sport style, falling down a green inclined surface, minimal scene, fixed camera, empty background."
 prompt = sys.argv[1] if len(sys.argv) > 1 else default_prompt
 negative_prompt = "duplicate, extra objects, blur, motion blur, flicker, noise, artifacts, text"
 
@@ -126,13 +123,13 @@ repaint_pipeline.scheduler = DDIMScheduler.from_config(
     repaint_pipeline.scheduler.config
 )
 
-strength = 0.4
-guidance_scale_1 = 6.1
-cond_scale_depth = 1.25
-cond_scale_edge = 1.15
-cond_scale_seg = 1.0
-num_inference_steps_1 = 18
-prev_blend = 0.0
+strength = 0.33
+guidance_scale_1 = 6.0
+cond_scale_depth = 1.3
+cond_scale_edge = 1.2
+cond_scale_seg = 1.2
+num_inference_steps_1 = 20
+prev_blend = 0.11
 
 repainted = []
 prev = None
@@ -192,9 +189,9 @@ coherence_pipeline.enable_attention_slicing()
 coherence_pipeline.enable_vae_slicing()
 coherence_pipeline.scheduler = DDIMScheduler.from_config(coherence_pipeline.scheduler.config)
 
-guidance_scale_2 = 3.2
-strength_2 = 0.2
-num_inference_steps_2 = 5
+guidance_scale_2 = 2.2
+strength_2 = 0.22
+num_inference_steps_2 = 10
 
 inject_flow = [
     Image.blend(repainted[i].convert("RGB"), flow_parsed[i].resize(repainted[i].size).convert("RGB"), alpha=0.0)
