@@ -10,7 +10,6 @@ conda activate sim2vid
 ffmpeg -framerate 24 -i frames/frame_%04d.png -pix_fmt yuv420p -c:v libx264 output.mp4
 
 
-
 ## introduction and motivations
 
 The recent developments in artificial intelligence technology are allowing the generation of increasingly realistic, temporally coherent, high-quality videos from human textual prompts. This technology is revolutionary and is changing many industries and dimensions of life, from education to entertainment, art, science, and much more.

@@ -23,7 +23,7 @@ input_depth = "depth"
 input_edges = "edges"
 input_flow = "flow"
 input_seg = "segmentation"
-output_path = "output_long_test5.mp4"
+output_path = "output_long_test6.mp4"
 style_anchor_path = os.path.join("style_anchor", "anchor_image.png")
 resolution = (512, 384)
 
@@ -104,9 +104,11 @@ adapter = MotionAdapter.from_pretrained(
 )
 
 # prompts
-default_prompt = "a basketball ball orange colored, nba sport style, falling down a green inclined surface, minimal scene, fixed camera, empty background."
+# default_prompt = "a basketball ball orange colored, NBA sport style, falling down 1 meter above a 30° degrees inclined surface, minimal scene, fixed camera, empty background."
+default_prompt = "a soccer football, falling down 1 meter above an inclined surface, minimal scene, fixed camera, empty background."
+
 prompt = sys.argv[1] if len(sys.argv) > 1 else default_prompt
-negative_prompt = "duplicate, extra objects, blur, motion blur, flicker, noise, artifacts, text"
+negative_prompt = "duplicate, extra objects, blur, inconsistent, motion blur, flicker, noise, artifacts, text, unstable texture"
 
 
 # Step 1: Repaint

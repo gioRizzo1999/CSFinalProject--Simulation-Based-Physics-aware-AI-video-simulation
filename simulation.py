@@ -89,6 +89,8 @@ for o in objects_ordered:
         p.changeVisualShape(obj_id, -1, rgbaColor=color, textureUniqueId=-1)
     except TypeError:
         p.changeVisualShape(obj_id, -1, rgbaColor=color)
+        
+    #extract style_anchor for stabilizing video generation later
     if name == "plane":
         os.makedirs("style_anchor", exist_ok=True)
         rgb = np.reshape(p.getCameraImage(width, height, view, proj, renderer=p.ER_TINY_RENDERER)[2], (height, width, 4))[:, :, :3]

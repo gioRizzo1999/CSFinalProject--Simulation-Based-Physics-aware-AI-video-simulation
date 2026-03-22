@@ -1,5 +1,5 @@
-# Two steps process. generate constrained frames, then make transition smoother between them
-# Add all control maps as guide, tweak gen parameters, optionally add API to increase frames capacity
+# Two steps process: generate structurally constrained frames, then make transitions smoother 
+
 import torch
 import os
 from PIL import Image
@@ -81,8 +81,10 @@ adapter = MotionAdapter.from_pretrained(
 )
 
 # prompts
-# prompt = sys.argv[1]
-prompt = "a blue soccer football sliding down a green inclined plane, minimal scene, fixed camera, sharp details"
+# default_prompt = "a basketball ball orange colored, NBA sport style, falling down 1 meter above a 30° degrees inclined surface, minimal scene, fixed camera, empty background."
+default_prompt = "a soccer football, falling down 1 meter above an inclined surface, minimal scene, fixed camera, empty background."
+
+prompt = sys.argv[1] if len(sys.argv) > 1 else default_prompt
 negative_prompt = "duplicate, extra objects, blur, motion blur, flicker, noise, artifacts, text"
 
 
