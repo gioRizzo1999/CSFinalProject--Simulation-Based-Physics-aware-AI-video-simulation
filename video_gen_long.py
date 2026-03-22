@@ -23,7 +23,7 @@ input_depth = "depth"
 input_edges = "edges"
 input_flow = "flow"
 input_seg = "segmentation"
-output_path = "output_long_test6.mp4"
+output_path = "output_long_test7.mp4"
 style_anchor_path = os.path.join("style_anchor", "anchor_image.png")
 resolution = (512, 384)
 

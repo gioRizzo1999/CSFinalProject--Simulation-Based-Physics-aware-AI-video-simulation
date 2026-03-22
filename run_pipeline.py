@@ -11,7 +11,7 @@ def run_pipeline(user_prompt):
     subprocess.run([sys.executable, "edge_detection.py"], check=True)
     subprocess.run([sys.executable, "video_gen_long.py", user_prompt], check=True)
 
-    return "/Users/gioriz/Desktop/final project/project_files/output_long_test6.mp4"
+    return "/Users/gioriz/Desktop/final project/project_files/output_long_test7.mp4"
 
 
 # uncomment below to test script from console/without frontend

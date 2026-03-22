@@ -4,6 +4,7 @@ from ollama import ChatResponse
 import json
 import sys
 
+
 #high level:
 #idea: produce json specs and intent, then trigger pre-defined code for more complex scene
 #user inserts prompt that describes scene
@@ -26,12 +27,17 @@ Schema: { "objects":[ { "name":"plane|sphere|cube", "how_many": 1, "position":{"
 
 full_prompt = f"""{user_prompt} {tuning}""" 
 
-response: ChatResponse = chat(model='qwen3-coder:480b-cloud', messages=[
-  {
-    'role': 'user',
-    'content': full_prompt
-  },
-])
+try:
+    response: ChatResponse = chat(model='qwen3-coder:480b-cloud', messages=[
+      {
+        'role': 'user',
+        'content': full_prompt
+      },
+    ])
+except Exception as e:
+    raise ValueError(
+        "Call to Ollama failed. Make sure Ollama is open and working."
+    ) from e
 
 resp = response.message.content.strip()
 start = resp.find("{")
@@ -51,6 +57,4 @@ except json.JSONDecodeError:
 # write to file
 with open("parsed_json.json", "w") as file:
   json.dump(parsed_json, file, indent=4)
-
-
 
