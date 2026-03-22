@@ -4,13 +4,15 @@ import run_pipeline
 
 # User can add prompt to describe video scene and then triggere generation pipeline
 with gr.Blocks(css="""
-#result_video video {
-    max-height: 260px;
-    width: auto;
-}
-#result_video {
-    max-width: 340px;
+#output_video {
+    width: 740px;
+    max-width: 740px;
     margin: 0 auto;
+}
+#output_video video {
+    width: 100%;
+    max-height: 760px;
+    object-fit: contain;
 }
 """) as demo:
     user_input = gr.Textbox(label="Scene description")
